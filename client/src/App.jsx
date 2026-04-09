@@ -50,7 +50,9 @@ function Layout({ children }) {
           </Link>
           
           <Link to="/audit" className={`nav-link ${location.pathname === '/audit' ? 'active' : ''}`}>Audit Trail</Link>
-          <Link to="/simulation" className={`nav-link ${location.pathname === '/simulation' ? 'active' : ''}`}>Simulation Sandbox</Link>
+          {user.role === 'hod' && (
+            <Link to="/simulation" className={`nav-link ${location.pathname === '/simulation' ? 'active' : ''}`}>Simulation Sandbox</Link>
+          )}
         </div>
 
         <div className="navbar-user">
@@ -133,7 +135,7 @@ function App() {
         } />
 
         <Route path="/simulation" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={['hod']}>
             <SimulationSandbox />
           </ProtectedRoute>
         } />

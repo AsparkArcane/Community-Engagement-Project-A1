@@ -1,16 +1,16 @@
 const router = require('express').Router();
 const { computeSolarScore } = require('../services/solarService');
-const { protect } = require('../middleware/auth');
+const { protect, authorize } = require('../middleware/auth');
 
 // GET /api/solar/score/:roomId
-router.get('/score/:roomId', protect, async (req, res) => {
+router.get('/score/:roomId', protect, authorize('hod'), async (req, res) => {
   const { month, year } = req.query;
   const result = await computeSolarScore(req.params.roomId, Number(month), Number(year));
   res.json(result);
 });
 
 // GET /api/solar/payback/:roomId
-router.get('/payback/:roomId', protect, async (req, res) => {
+router.get('/payback/:roomId', protect, authorize('hod'), async (req, res) => {
   const { month, year, panelCapacityKW } = req.query;
   const result = await computeSolarScore(req.params.roomId, Number(month), Number(year), Number(panelCapacityKW));
   const yearlyData = [];
@@ -23,7 +23,7 @@ router.get('/payback/:roomId', protect, async (req, res) => {
 });
 
 // GET /api/solar/department/:departmentId
-router.get('/department/:departmentId', protect, async (req, res) => {
+router.get('/department/:departmentId', protect, authorize('hod'), async (req, res) => {
   const Room = require('../models/Room');
   const rooms = await Room.find({ departmentId: req.params.departmentId });
   const scores = await Promise.all(rooms.map(r => computeSolarScore(r._id, new Date().getMonth() + 1, new Date().getFullYear())));
