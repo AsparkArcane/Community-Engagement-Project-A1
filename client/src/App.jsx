@@ -1,16 +1,29 @@
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import AdminDashboard from './pages/AdminDashboard';
 import HodDashboard from './pages/HodDashboard';
 import StudentDashboard from './pages/StudentDashboard';
 import ProposalViewer from './components/ProposalViewer';
 import AuditTrail from './components/AuditTrail';
+import api from './api';
 import './App.css';
 
 // A mock simple layout wrapper
 function Layout({ children }) {
   const location = useLocation();
   const user = JSON.parse(localStorage.getItem('vjti_user')) || { role: 'admin' };
+  const [pendingCount, setPendingCount] = useState(0);
+
+  useEffect(() => {
+    // Only fetch if they have a token
+    if (localStorage.getItem('vjti_token')) {
+      api.get('/proposals').then(res => {
+        setPendingCount(res.data.filter(p => p.status === 'pending' || p.status === 'resubmitted').length);
+      }).catch(err => console.error(err));
+    }
+  }, [location.pathname]); // Update count when they navigate
 
   return (
     <div className="app-container">
@@ -27,10 +40,12 @@ function Layout({ children }) {
           
           <Link to="/approvals" className={`nav-link ${location.pathname === '/approvals' ? 'active' : ''}`} style={{ position: 'relative' }}>
             Pending Approvals
-            <span style={{
-              position: 'absolute', top: '-8px', right: '-12px', background: 'var(--status-danger)', 
-              color: 'white', fontSize: '0.7rem', padding: '0.1rem 0.4rem', borderRadius: 'var(--radius-full)', fontWeight: 'bold'
-            }}>12</span>
+            {pendingCount > 0 && (
+              <span style={{
+                position: 'absolute', top: '-8px', right: '-12px', background: 'var(--status-danger)', 
+                color: 'white', fontSize: '0.7rem', padding: '0.1rem 0.4rem', borderRadius: 'var(--radius-full)', fontWeight: 'bold'
+              }}>{pendingCount}</span>
+            )}
           </Link>
           
           <Link to="/audit" className={`nav-link ${location.pathname === '/audit' ? 'active' : ''}`}>Audit Trail</Link>
@@ -91,6 +106,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Login />} />
+        <Route path="/register" element={<Register />} />
         
         <Route path="/admin-dashboard" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
         <Route path="/hod-dashboard" element={<ProtectedRoute allowedRoles={['hod']}><HodDashboard /></ProtectedRoute>} />

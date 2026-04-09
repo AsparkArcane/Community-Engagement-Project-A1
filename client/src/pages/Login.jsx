@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
 import api from '../api';
 
@@ -80,6 +80,9 @@ export default function Login() {
         
         <div className="mt-4 text-center">
           <p className="text-muted" style={{ fontSize: '0.875rem' }}>Mock Login is active for Phase 4 UI setup.</p>
+          <p className="text-muted mt-2" style={{ fontSize: '0.875rem' }}>
+            Don't have an account? <Link to="/register" style={{ color: 'var(--brand-primary)', textDecoration: 'none' }}>Register here</Link>
+          </p>
         </div>
       </div>
 

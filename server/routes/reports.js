@@ -46,4 +46,22 @@ router.get('/csv/department/:departmentId', protect, async (req, res) => {
   res.send(csv);
 });
 
+// GET /api/reports/recommendations/global
+router.get('/recommendations/global', protect, async (req, res) => {
+  const { generateRecommendations } = require('../services/recommendationEngine');
+  const m = Number(req.query.month) || new Date().getMonth() + 1;
+  const y = Number(req.query.year) || new Date().getFullYear();
+  const data = await generateRecommendations(null, m, y);
+  res.json(data);
+});
+
+// GET /api/reports/recommendations/department/:departmentId
+router.get('/recommendations/department/:departmentId', protect, async (req, res) => {
+  const { generateRecommendations } = require('../services/recommendationEngine');
+  const m = Number(req.query.month) || new Date().getMonth() + 1;
+  const y = Number(req.query.year) || new Date().getFullYear();
+  const data = await generateRecommendations(req.params.departmentId, m, y);
+  res.json(data);
+});
+
 module.exports = router;

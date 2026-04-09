@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import toast from 'react-hot-toast';
 import api from '../api';
@@ -16,6 +17,47 @@ const mockData = [
 ];
 
 export default function AdminDashboard() {
+  const [stats, setStats] = useState({ totalKWh: 0, totalCost: 0, loading: true });
+  const [recommendations, setRecommendations] = useState([]);
+  const [pendingProposalsCount, setPendingProposalsCount] = useState(0);
+
+  useEffect(() => {
+    fetchGlobalConsumption();
+    fetchRecommendations();
+    fetchPendingProposals();
+  }, []);
+
+  const fetchGlobalConsumption = async () => {
+    try {
+      const res = await api.get('/consumption/global');
+      setStats({
+        totalKWh: res.data.totalKWh || 0,
+        totalCost: res.data.totalCost || 0,
+        loading: false
+      });
+    } catch (err) {
+      console.error(err);
+      setStats(s => ({ ...s, loading: false }));
+    }
+  };
+
+  const fetchRecommendations = async () => {
+    try {
+      const res = await api.get('/reports/recommendations/global');
+      setRecommendations(res.data.recommendations || []);
+    } catch (err) {
+      console.error('Failed to load recommendations');
+    }
+  };
+
+  const fetchPendingProposals = async () => {
+    try {
+      const res = await api.get('/proposals');
+      setPendingProposalsCount(res.data.filter(p => p.status === 'pending' || p.status === 'resubmitted').length);
+    } catch (err) {
+      console.error('Failed to parse proposals');
+    }
+  };
 
   const handleGCalSync = async () => {
     try {
@@ -41,19 +83,44 @@ export default function AdminDashboard() {
       <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
         <div className="card">
           <h3 className="text-secondary" style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>Campus Total Consumption</h3>
-          <p className="text-gradient" style={{ fontSize: '2.5rem', fontWeight: 'bold' }}>24.5 MWh</p>
-          <p className="text-muted text-sm">+2.4% from last month</p>
+          <p className="text-gradient" style={{ fontSize: '2.5rem', fontWeight: 'bold' }}>
+            {stats.loading ? '...' : `${(stats.totalKWh / 1000).toFixed(2)} MWh`}
+          </p>
+          <p className="text-muted text-sm">Dynamic Engine Analytics</p>
         </div>
         <div className="card">
           <h3 className="text-secondary" style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>Pending Proposals</h3>
-          <p className="text-gradient" style={{ fontSize: '2.5rem', fontWeight: 'bold' }}>12</p>
-          <p className="text-warning text-sm">3 require immediate review</p>
+          <p className="text-gradient" style={{ fontSize: '2.5rem', fontWeight: 'bold' }}>
+            {pendingProposalsCount}
+          </p>
+          <p className={pendingProposalsCount > 0 ? "text-warning text-sm" : "text-success text-sm"}>
+             {pendingProposalsCount > 0 ? "Requires administrative review" : "Up to date"}
+          </p>
         </div>
         <div className="card">
           <h3 className="text-secondary" style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>Current Tariff Bill</h3>
-          <p className="text-gradient" style={{ fontSize: '2.5rem', fontWeight: 'bold' }}>₹4,25,000</p>
+          <p className="text-gradient" style={{ fontSize: '2.5rem', fontWeight: 'bold' }}>
+            {stats.loading ? '...' : `₹${stats.totalCost.toLocaleString()}`}
+          </p>
           <p className="text-muted text-sm">Estimated for current month</p>
         </div>
+      </div>
+
+      <div className="card mb-4" style={{ border: '1px solid var(--brand-primary)', boxShadow: '0 0 20px rgba(0,240,255,0.05)' }}>
+        <h3 className="text-gradient mb-3 flex items-center gap-2">
+          ⚡ Engine Recommendations
+        </h3>
+        {recommendations.length === 0 ? (
+          <p className="text-muted text-sm">Collecting footprint baseline data. Ensure rooms are populated with active appliances.</p>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {recommendations.map((rec, i) => (
+              <div key={i} className="p-3 rounded" style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderLeft: '3px solid var(--brand-primary)' }}>
+                <p className="text-sm">{rec}</p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="card mb-4">
