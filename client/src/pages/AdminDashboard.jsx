@@ -6,26 +6,27 @@ import ProposalViewer from '../components/ProposalViewer';
 import NotificationCenter from '../components/NotificationCenter';
 import AuditTrail from '../components/AuditTrail';
 
-const mockData = [
-  { name: 'Jan', consumption: 21 },
-  { name: 'Feb', consumption: 22 },
-  { name: 'Mar', consumption: 28 },
-  { name: 'Apr', consumption: 32 },
-  { name: 'May', consumption: 35 },
-  { name: 'Jun', consumption: 38 },
-  { name: 'Jul', consumption: 29 },
-];
-
 export default function AdminDashboard() {
   const [stats, setStats] = useState({ totalKWh: 0, totalCost: 0, loading: true });
   const [recommendations, setRecommendations] = useState([]);
   const [pendingProposalsCount, setPendingProposalsCount] = useState(0);
+  const [trendsData, setTrendsData] = useState([]);
 
   useEffect(() => {
     fetchGlobalConsumption();
     fetchRecommendations();
     fetchPendingProposals();
+    fetchTrends();
   }, []);
+
+  const fetchTrends = async () => {
+    try {
+      const res = await api.get('/consumption/trends/global');
+      setTrendsData(res.data);
+    } catch(err) {
+      console.error('Failed to load trends data');
+    }
+  };
 
   const fetchGlobalConsumption = async () => {
     try {
@@ -127,7 +128,7 @@ export default function AdminDashboard() {
          <h3 className="mb-3">Energy Trends (MWh)</h3>
          <div style={{ height: '350px', width: '100%' }}>
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={mockData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+              <AreaChart data={trendsData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorCons" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#00f0ff" stopOpacity={0.8}/>

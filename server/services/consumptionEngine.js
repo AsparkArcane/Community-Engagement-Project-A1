@@ -9,18 +9,17 @@ const Department = require('../models/Department');
  * Rules:
  *  - Saturday (6) and Sunday (0) are always OFF
  *  - If date is in Holiday list → OFF
- *  - If there's a timetable entry for that dayOfWeek → Lecture day (+1h buffer)
- *  - Otherwise → Phantom load day (+0.5h buffer)
+ *  - If there's a timetable entry for that dayOfWeek in the provided set → Lecture day
+ *  - Otherwise → Phantom load day
  */
-async function getDayType(date, roomId, holidaySet) {
+async function getDayType(date, roomId, holidaySet, timetableDays) {
   const dayOfWeek = date.getDay(); // 0=Sun, 6=Sat
   if (dayOfWeek === 0 || dayOfWeek === 6) return 'off';
 
   const dateStr = date.toISOString().split('T')[0];
   if (holidaySet.has(dateStr)) return 'off';
 
-  const timetableEntry = await TimetableEntry.findOne({ roomId, dayOfWeek });
-  if (timetableEntry) return 'lecture';
+  if (timetableDays.has(dayOfWeek)) return 'lecture';
   return 'phantom';
 }
 
@@ -64,6 +63,10 @@ async function computeRoomConsumption(roomId, month, year) {
   const holidayDocs = await Holiday.find({ date: { $gte: startDate, $lt: endDate } });
   const holidaySet = new Set(holidayDocs.map(h => h.date.toISOString().split('T')[0]));
 
+  // Batch load timetable
+  const timetables = await TimetableEntry.find({ roomId });
+  const timetableDays = new Set(timetables.map(t => t.dayOfWeek));
+
   // Iterate days in month
   const dailyData = [];
   let totalKWh = 0;
@@ -71,7 +74,7 @@ async function computeRoomConsumption(roomId, month, year) {
 
   for (let day = 1; day <= new Date(year, month, 0).getDate(); day++) {
     const date = new Date(year, month - 1, day);
-    const dayType = await getDayType(date, roomId, holidaySet);
+    const dayType = await getDayType(date, roomId, holidaySet, timetableDays);
     const kWh = computeDailyKWh(appliances, dayType);
     totalKWh += kWh;
     dailyData.push({ date: date.toISOString().split('T')[0], dayType, kWh });

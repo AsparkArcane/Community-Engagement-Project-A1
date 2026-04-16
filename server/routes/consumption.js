@@ -46,4 +46,39 @@ router.get('/global', protect, async (req, res) => {
   res.json({ month: m, year: y, rooms: valid, totalKWh: +total.toFixed(3), totalCost: +totalCost.toFixed(2) });
 });
 
+// GET /api/consumption/trends/global?year=2026
+router.get('/trends/global', protect, async (req, res) => {
+  const y = Number(req.query.year) || new Date().getFullYear();
+  const rooms = await Room.find();
+  const trends = [];
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  
+  for (let m = 1; m <= 12; m++) {
+    // Only compile trends up to current month to save cycles if looking at current year
+    if (y === new Date().getFullYear() && m > new Date().getMonth() + 1) break;
+    const results = await Promise.all(rooms.map(r => computeRoomConsumption(r._id, m, y)));
+    const valid = results.filter(Boolean);
+    const total = valid.reduce((s, r) => s + r.totalKWh, 0);
+    trends.push({ name: monthNames[m-1], consumption: +(total / 1000).toFixed(3) }); // scaled to MWh
+  }
+  res.json(trends);
+});
+
+// GET /api/consumption/trends/department/:departmentId?year=2026
+router.get('/trends/department/:departmentId', protect, async (req, res) => {
+  const y = Number(req.query.year) || new Date().getFullYear();
+  const rooms = await Room.find({ departmentId: req.params.departmentId });
+  const trends = [];
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  
+  for (let m = 1; m <= 12; m++) {
+    if (y === new Date().getFullYear() && m > new Date().getMonth() + 1) break;
+    const results = await Promise.all(rooms.map(r => computeRoomConsumption(r._id, m, y)));
+    const valid = results.filter(Boolean);
+    const total = valid.reduce((s, r) => s + r.totalKWh, 0);
+    trends.push({ name: monthNames[m-1], consumption: +(total / 1000).toFixed(3) });
+  }
+  res.json(trends);
+});
+
 module.exports = router;

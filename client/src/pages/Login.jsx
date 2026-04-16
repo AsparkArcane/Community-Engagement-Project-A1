@@ -23,15 +23,7 @@ export default function Login() {
       navigate(`/${user.role}-dashboard`);
     } catch (err) {
       console.error(err);
-      toast.error(err.response?.data?.message || 'Login failed. Proceeding with Mock fallback.');
-      
-      // Fallback for UI visualization
-      const fallbackUser = { email, role: 'admin' };
-      if (email.includes('hod')) fallbackUser.role = 'hod';
-      if (email.includes('student')) fallbackUser.role = 'student';
-      
-      localStorage.setItem('vjti_user', JSON.stringify(fallbackUser));
-      navigate(`/${fallbackUser.role}-dashboard`);
+      toast.error(err.response?.data?.message || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
@@ -48,7 +40,7 @@ export default function Login() {
 
         <form onSubmit={handleLogin} className="flex" style={{ flexDirection: 'column', gap: '1.25rem' }}>
           <div>
-            <label className="text-secondary" style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Email Adddress</label>
+            <label className="text-secondary" style={{ display: 'block', marginBottom: '0.5rem', fontSize: '1rem' }}>Email Address</label>
             <input 
               type="email" 
               className="input-field" 
@@ -60,7 +52,7 @@ export default function Login() {
           </div>
 
           <div>
-             <label className="text-secondary" style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Password</label>
+             <label className="text-secondary" style={{ display: 'block', marginBottom: '0.5rem', fontSize: '1rem' }}>Password</label>
             <input 
               type="password" 
               className="input-field" 
@@ -71,16 +63,13 @@ export default function Login() {
             />
           </div>
 
-
-
           <button type="submit" className="btn btn-primary mt-4 w-full">
-            Sign In to Dashboard
+            {loading ? 'Authenticating...' : 'Sign In to Dashboard'}
           </button>
         </form>
         
         <div className="mt-4 text-center">
-          <p className="text-muted" style={{ fontSize: '0.875rem' }}>Mock Login is active for Phase 4 UI setup.</p>
-          <p className="text-muted mt-2" style={{ fontSize: '0.875rem' }}>
+          <p className="text-muted mt-2" style={{ fontSize: '1rem' }}>
             Don't have an account? <Link to="/register" style={{ color: 'var(--brand-primary)', textDecoration: 'none' }}>Register here</Link>
           </p>
         </div>

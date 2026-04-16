@@ -2,20 +2,12 @@ import { useState, useEffect } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import api from '../api';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-
-const mockData = [
-  { name: 'Jan', consumption: 3.1 },
-  { name: 'Feb', consumption: 3.5 },
-  { name: 'Mar', consumption: 4.2 },
-  { name: 'Apr', consumption: 4.8 },
-  { name: 'May', consumption: 5.1 },
-  { name: 'Jun', consumption: 5.5 },
-  { name: 'Jul', consumption: 4.0 },
-];
+import NotificationCenter from '../components/NotificationCenter';
 
 export default function HodDashboard() {
   const [rooms, setRooms] = useState([]);
   const [libraryAppliances, setLibraryAppliances] = useState([]);
+  const [trendsData, setTrendsData] = useState([]);
   
   // Modals state
   const [isRoomModalOpen, setIsRoomModalOpen] = useState(false);
@@ -46,7 +38,19 @@ export default function HodDashboard() {
     fetchRooms();
     fetchLibrary();
     fetchDeptConsumption();
+    fetchTrends();
   }, []);
+
+  const fetchTrends = async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem('vjti_user'));
+      if (!user?.department) return;
+      const res = await api.get(`/consumption/trends/department/${user.department}`);
+      setTrendsData(res.data);
+    } catch (err) {
+      console.error('Failed to load department trends');
+    }
+  };
 
   const submitProposal = async () => {
     if (!proposalForm.roomId || !proposalForm.description) return toast.error('Select a room and provide justification');
@@ -322,7 +326,7 @@ export default function HodDashboard() {
          <h3 className="mb-3">Energy Trends (MWh)</h3>
          <div style={{ height: '300px', width: '100%' }}>
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={mockData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+              <AreaChart data={trendsData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorConsHod" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#00f0ff" stopOpacity={0.8}/>
@@ -342,11 +346,15 @@ export default function HodDashboard() {
          </div>
       </div>
 
+      <div className="mb-4">
+         <NotificationCenter />
+      </div>
+
       {/* MODAL: MANAGE EXISTING ROOM */}
       {isManageRoomModalOpen && activeRoom && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" style={{ padding: '1rem' }}>
           <div className="card w-full max-w-2xl max-h-[90vh] overflow-y-auto" style={{ position: 'relative' }}>
-            <button className="absolute top-4 right-4 text-muted hover-text-primary" onClick={() => setIsManageRoomModalOpen(false)}>✕</button>
+            <button className="text-muted hover:text-primary" style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'transparent', border: 'none', fontSize: '1.2rem', cursor: 'pointer' }} onClick={() => setIsManageRoomModalOpen(false)}>✕</button>
             <h2 className="mb-4">Manage: {activeRoom.name}</h2>
 
             <div className="grid grid-cols-2 gap-4 mb-6">
@@ -374,7 +382,7 @@ export default function HodDashboard() {
             </div>
 
             <div className="flex justify-between items-center mb-6">
-              <button className="text-danger" style={{ color: 'var(--status-danger)' }} onClick={handleDeleteRoom}>Delete Entire Room</button>
+              <button style={{ color: 'var(--status-danger)', border: 'none', background: 'transparent', cursor: 'pointer', fontWeight: '500' }} onClick={handleDeleteRoom}>Delete Entire Room</button>
               <button className="btn btn-primary" onClick={submitRoomUpdate} disabled={loading}>{loading ? 'Saving...' : 'Save Details'}</button>
             </div>
 
@@ -386,12 +394,12 @@ export default function HodDashboard() {
                 <h3 className="text-lg">Assigned Appliances</h3>
               </div>
               
-              <div className="bg-dark p-3 rounded flex flex-col gap-2 mb-4" style={{ minHeight: '80px', backgroundColor: '#0a0a0c' }}>
+              <div className="p-3 rounded flex flex-col gap-2 mb-4" style={{ minHeight: '80px', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-color)' }}>
                 {activeRoomAppliances.length === 0 ? (
                   <p className="text-muted text-sm text-center mt-3">No appliances found.</p>
                 ) : (
                   activeRoomAppliances.map((app) => (
-                    <div key={app._id} className="flex justify-between items-center p-2 rounded" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>
+                    <div key={app._id} className="flex justify-between items-center p-2 rounded" style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
                       <div>
                         <span className="font-bold">{app.applianceLibraryId?.name || 'Unknown'}</span>
                         <span className="text-secondary text-sm ml-2">x{app.quantity} ({app.usageHours} hrs/day)</span>
@@ -436,7 +444,7 @@ export default function HodDashboard() {
       {isRoomModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" style={{ padding: '1rem' }}>
           <div className="card w-full max-w-2xl max-h-[90vh] overflow-y-auto" style={{ position: 'relative' }}>
-            <button className="absolute top-4 right-4 text-muted hover-text-primary" onClick={() => setIsRoomModalOpen(false)}>✕</button>
+            <button className="text-muted hover:text-primary" style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'transparent', border: 'none', fontSize: '1.2rem', cursor: 'pointer' }} onClick={() => setIsRoomModalOpen(false)}>✕</button>
             <h2 className="mb-4">Configure New Room</h2>
 
             <div className="grid grid-cols-2 gap-4 mb-6">
@@ -468,7 +476,7 @@ export default function HodDashboard() {
             <div className="mb-4">
               <div className="flex justify-between items-center mb-2">
                 <h3 className="text-lg">Appliance Configuration</h3>
-                <button className="text-brand text-sm" onClick={() => setIsNewDeviceModalOpen(true)}>+ Add New Device to Global Library</button>
+                <button className="btn btn-secondary" style={{ padding: '0.25rem 0.75rem', fontSize: '0.875rem' }} onClick={() => setIsNewDeviceModalOpen(true)}>+ Add Global Device</button>
               </div>
               
               <div className="flex gap-2 items-end mb-4 bg-muted/10 p-3 rounded-lg" style={{ backgroundColor: 'rgba(255,255,255,0.02)' }}>
@@ -494,12 +502,12 @@ export default function HodDashboard() {
                 </div>
               </div>
 
-              <div className="bg-dark p-3 rounded flex flex-col gap-2" style={{ minHeight: '100px', backgroundColor: '#0a0a0c' }}>
+              <div className="p-3 rounded flex flex-col gap-2" style={{ minHeight: '100px', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-color)' }}>
                 {selectedAppliances.length === 0 ? (
                   <p className="text-muted text-sm text-center mt-6">No appliances added yet.</p>
                 ) : (
                   selectedAppliances.map((app) => (
-                    <div key={app.applianceLibraryId} className="flex justify-between items-center p-2 rounded" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>
+                    <div key={app.applianceLibraryId} className="flex justify-between items-center p-2 rounded" style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
                       <div>
                         <span className="font-bold">{app.name}</span>
                         <span className="text-secondary text-sm ml-2">x{app.quantity} ({app.usageHours} hrs/day)</span>
@@ -546,10 +554,10 @@ export default function HodDashboard() {
                </select>
              </div>
            </div>
-           <div className="flex justify-end gap-3">
-             <button className="text-muted text-sm hover:underline" onClick={() => setIsNewDeviceModalOpen(false)}>Cancel</button>
-             <button className="btn btn-primary" onClick={submitNewDevice} disabled={loading}>{loading ? 'Adding...' : 'Add Template'}</button>
-           </div>
+            <div className="flex justify-end gap-3">
+              <button className="btn btn-secondary text-sm" onClick={() => setIsNewDeviceModalOpen(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={submitNewDevice} disabled={loading}>{loading ? 'Adding...' : 'Add Template'}</button>
+            </div>
          </div>
        </div>
       )}
@@ -590,10 +598,10 @@ export default function HodDashboard() {
                 />
              </div>
            </div>
-           <div className="flex justify-end gap-3">
-             <button className="text-muted text-sm hover:underline" onClick={() => setIsProposalModalOpen(false)}>Cancel</button>
-             <button className="btn btn-primary" onClick={submitProposal} disabled={loading}>{loading ? 'Submitting...' : 'Submit to Admin'}</button>
-           </div>
+            <div className="flex justify-end gap-3">
+              <button className="btn btn-secondary text-sm" onClick={() => setIsProposalModalOpen(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={submitProposal} disabled={loading}>{loading ? 'Submitting...' : 'Submit to Admin'}</button>
+            </div>
          </div>
        </div>
       )}

@@ -66,9 +66,9 @@ export default function SimulationSandbox() {
           <div style={{ marginBottom: '1.5rem' }}>
             <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Target Room/Facility</label>
             <select 
+              className="input-field"
               value={selectedRoom} 
               onChange={e => setSelectedRoom(e.target.value)}
-              style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: '#fff' }}
             >
               <option value="" disabled>Select Room</option>
               {rooms.map(r => (
@@ -96,7 +96,7 @@ export default function SimulationSandbox() {
 
           <button 
             className="btn btn-primary" 
-            style={{ width: '100%', padding: '1rem', background: 'var(--brand-primary)', color: '#000', fontWeight: 'bold' }}
+            style={{ width: '100%', padding: '1rem', fontWeight: 'bold' }}
             onClick={submitProposal}
             disabled={proposalStatus === 'submitting' || loading || !simulationData}
           >
@@ -119,7 +119,7 @@ export default function SimulationSandbox() {
           ) : simulationData ? (
             <>
               <div className="grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
-                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div style={{ background: 'var(--bg-surface-elevated)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
                   <p className="text-muted text-sm mb-1">Initial Investment</p>
                   <p style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>₹{simulationData.panelCostINR.toLocaleString()}</p>
                 </div>
@@ -136,11 +136,11 @@ export default function SimulationSandbox() {
               <div style={{ flex: 1, minHeight: '300px' }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={simulationData.paybackTimeline} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                    <XAxis dataKey="year" stroke="rgba(255,255,255,0.5)" label={{ value: 'Years', position: 'insideBottomRight', fill: 'rgba(255,255,255,0.5)', offset: -5 }} />
-                    <YAxis stroke="rgba(255,255,255,0.5)" tickFormatter={val => '₹' + (val/1000).toFixed(0) + 'k'} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+                    <XAxis dataKey="year" stroke="var(--text-muted)" label={{ value: 'Years', position: 'insideBottomRight', fill: 'var(--text-muted)', offset: -5 }} />
+                    <YAxis stroke="var(--text-muted)" tickFormatter={val => '₹' + (val/1000).toFixed(0) + 'k'} />
                     <Tooltip 
-                      contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)' }}
+                      contentStyle={{ background: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', color: 'var(--text-primary)' }}
                       formatter={(value) => '₹' + value.toLocaleString()}
                     />
                     <Legend />

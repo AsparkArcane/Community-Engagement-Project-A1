@@ -1,11 +1,32 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
+import api from '../api';
 
 export default function NotificationCenter() {
-  const notifications = [
-    { id: 1, title: 'Consumption Alert', desc: 'Library wing exceeded daily threshold by 15%', type: 'warning', time: '10 mins ago' },
-    { id: 2, title: 'Proposal Approved', desc: 'PR-101 for Solar Installation Phase 1 approved by Admin', type: 'success', time: '2 hours ago' },
-    { id: 3, title: 'System Maintenance', desc: 'Scheduled downtime on Sunday 2AM-4AM', type: 'info', time: '1 day ago' },
-  ];
+  const [notifications, setNotifications] = useState([]);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+
+  const fetchNotifications = async () => {
+    try {
+      const res = await api.get('/notifications');
+      setNotifications(res.data);
+    } catch (err) {
+      console.error('Failed to load notifications');
+    }
+  };
+
+  const markAllRead = async () => {
+    try {
+      await api.put('/notifications/read-all');
+      setNotifications(notifications.map(n => ({ ...n, read: true })));
+      toast.success('All marked as read');
+    } catch {
+      toast.error('Failed to mark all read');
+    }
+  };
 
   const getTypeColor = (type) => {
     switch(type) {
@@ -13,7 +34,7 @@ export default function NotificationCenter() {
       case 'success': return 'var(--status-success)';
       case 'info': return 'var(--status-info)';
       case 'danger': return 'var(--status-danger)';
-      default: return 'var(--text-primary)';
+      default: return 'var(--brand-primary)';
     }
   };
 
@@ -21,19 +42,23 @@ export default function NotificationCenter() {
     <div className="card">
       <div className="flex items-center justify-between mb-4">
          <h3>Notification Center</h3>
-         <button className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>Mark all read</button>
+         <button className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }} onClick={markAllRead}>Mark all read</button>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        {notifications.map(notif => (
-          <div key={notif.id} style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-md)', borderLeft: `4px solid ${getTypeColor(notif.type)}` }}>
-            <div className="flex justify-between items-center mb-1">
-              <h4 style={{ fontSize: '1rem' }}>{notif.title}</h4>
-              <span className="text-muted text-sm" style={{ fontSize: '0.75rem' }}>{notif.time}</span>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '400px', overflowY: 'auto' }}>
+        {notifications.length === 0 ? (
+           <p className="text-muted text-sm text-center py-4">No notifications yet.</p>
+        ) : (
+          notifications.map(notif => (
+            <div key={notif._id} style={{ padding: '1rem', background: notif.read ? 'transparent' : 'rgba(37,99,235,0.05)', borderRadius: 'var(--radius-md)', borderLeft: `4px solid ${getTypeColor(notif.type)}`, border: notif.read ? '1px solid var(--border-color)' : '1px solid rgba(37,99,235,0.2)' }}>
+              <div className="flex justify-between items-center mb-1">
+                <h4 style={{ fontSize: '1rem', color: notif.read ? 'var(--text-secondary)' : 'var(--text-primary)' }}>{notif.type.toUpperCase()}</h4>
+                <span className="text-muted text-sm" style={{ fontSize: '0.75rem' }}>{new Date(notif.createdAt).toLocaleDateString()}</span>
+              </div>
+              <p className="text-secondary text-sm">{notif.message}</p>
             </div>
-            <p className="text-secondary text-sm">{notif.desc}</p>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );

@@ -68,7 +68,11 @@ router.put('/:id/review', protect, authorize('admin'), async (req, res) => {
   }
 
   // Notify HOD
-  await Notification.create({ userId: proposal.proposedBy._id, message: `Your proposal was ${status} by ${req.user.name}`, type: status === 'approved' ? 'info' : 'warning', relatedId: proposal._id, relatedModel: 'Proposal' });
+  const notifMessage = status === 'rejected' 
+    ? `Admin ${req.user.name} requested changes to your proposal${comment ? ': ' + comment : '.'}` 
+    : `Your proposal was ${status} by ${req.user.name}`;
+
+  await Notification.create({ userId: proposal.proposedBy._id, message: notifMessage, type: status === 'approved' ? 'info' : 'warning', relatedId: proposal._id, relatedModel: 'Proposal' });
 
   // Send email
   try {

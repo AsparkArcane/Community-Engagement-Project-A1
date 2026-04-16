@@ -11,9 +11,25 @@ router.get('/room/:roomId', protect, async (req, res) => {
   res.json(faults);
 });
 
+const Notification = require('../models/Notification');
+const User = require('../models/User');
+
 router.post('/', protect, async (req, res) => {
   const fault = await FaultLog.create({ ...req.body, reportedBy: req.user._id });
   await AuditLog.create({ action: 'LOG_FAULT', performedBy: req.user._id, targetType: 'FaultLog', targetId: fault._id, newValue: req.body });
+
+  // Notify HODs about this complaint
+  const hods = await User.find({ role: 'hod', isActive: true });
+  for (const hod of hods) {
+    await Notification.create({
+      userId: hod._id,
+      message: `New complaint reported by ${req.user.name}: ${req.body.description}`,
+      type: 'warning',
+      relatedId: fault._id,
+      relatedModel: 'FaultLog'
+    });
+  }
+
   res.status(201).json(fault);
 });
 
