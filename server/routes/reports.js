@@ -46,6 +46,29 @@ router.get('/csv/department/:departmentId', protect, async (req, res) => {
   res.send(csv);
 });
 
+// GET /api/reports/csv/global
+router.get('/csv/global', protect, async (req, res) => {
+  const { month, year } = req.query;
+  const m = Number(month) || new Date().getMonth() + 1;
+  const y = Number(year) || new Date().getFullYear();
+  const rooms = await Room.find();
+  
+  const results = await Promise.all(rooms.map(r => computeRoomConsumption(r._id, m, y)));
+
+  let csv = 'Room,Working Days,Total kWh,Total Cost (INR)\r\n';
+  let grandKWh = 0, grandCost = 0;
+  for (const r of results.filter(Boolean)) {
+    csv += `"${r.roomName}",${r.workingDays},${r.totalKWh},${r.totalCost}\r\n`;
+    grandKWh += r.totalKWh;
+    grandCost += r.totalCost;
+  }
+  csv += `\r\nGRAND TOTAL,,,${grandKWh.toFixed(3)},${grandCost.toFixed(2)}\r\n`;
+
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', `attachment; filename="campus-global-${y}-${m}.csv"`);
+  res.send(csv);
+});
+
 // GET /api/reports/recommendations/global
 router.get('/recommendations/global', protect, async (req, res) => {
   const { generateRecommendations } = require('../services/recommendationEngine');

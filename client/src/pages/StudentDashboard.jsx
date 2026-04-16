@@ -27,6 +27,23 @@ export default function StudentDashboard() {
     }
   };
 
+  const downloadReport = async () => {
+    try {
+      toast.loading('Generating report...', { id: 'csv' });
+      const res = await api.get('/reports/csv/global', { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `campus-global-${new Date().getFullYear()}-${new Date().getMonth() + 1}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      toast.success('Report downloaded', { id: 'csv' });
+    } catch (err) {
+      toast.error('Failed to download report', { id: 'csv' });
+    }
+  };
+
   return (
     <div className="animate-fade-in-up">
       <Toaster position="top-right" />
@@ -46,7 +63,7 @@ export default function StudentDashboard() {
         <div className="card text-center">
           <h3 className="text-secondary mb-2">Download Analytics Report</h3>
           <p className="text-muted mb-3" style={{ fontSize: '0.875rem' }}>Access full detailed historical consumption data formatted in CSV</p>
-          <button className="btn btn-secondary w-full">Download CSV</button>
+          <button className="btn btn-secondary w-full" onClick={downloadReport}>Download CSV</button>
         </div>
         <div className="card text-center">
           <h3 className="text-secondary mb-2">Simulation Sandbox</h3>

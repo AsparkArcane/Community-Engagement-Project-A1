@@ -15,6 +15,10 @@ router.post('/register', async (req, res) => {
         return res.status(400).json({ message: 'Please provide all required fields' });
     }
 
+    if (!email.toLowerCase().endsWith('.vjti.ac.in')) {
+        return res.status(403).json({ message: 'Only valid @*.vjti.ac.in institution emails are allowed for access' });
+    }
+
     const userExists = await User.findOne({ email });
     if (userExists) {
         return res.status(400).json({ message: 'User already exists' });
@@ -32,6 +36,10 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ message: 'Email and password required' });
+
+    if (!email.toLowerCase().endsWith('.vjti.ac.in')) {
+        return res.status(403).json({ message: 'Only valid @*.vjti.ac.in institution emails are allowed for access' });
+    }
 
     const user = await User.findOne({ email }).populate('departmentId', 'name code');
     if (!user || !user.isActive) return res.status(401).json({ message: 'Invalid credentials' });
