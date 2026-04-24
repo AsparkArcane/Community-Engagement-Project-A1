@@ -16,16 +16,17 @@ import './App.css';
 function Layout({ children }) {
   const location = useLocation();
   const user = JSON.parse(localStorage.getItem('vjti_user')) || { role: 'admin' };
+  const showAdminTabs = user.role !== 'student';
   const [pendingCount, setPendingCount] = useState(0);
 
   useEffect(() => {
-    // Only fetch if they have a token
-    if (localStorage.getItem('vjti_token')) {
+    // Student nav hides approval/audit tabs, so no need to fetch pending count there.
+    if (showAdminTabs && localStorage.getItem('vjti_token')) {
       api.get('/proposals').then(res => {
         setPendingCount(res.data.filter(p => p.status === 'pending' || p.status === 'resubmitted').length);
       }).catch(err => console.error(err));
     }
-  }, [location.pathname]); // Update count when they navigate
+  }, [location.pathname, showAdminTabs]); // Update count when they navigate
 
   return (
     <div className="app-container">
@@ -40,17 +41,21 @@ function Layout({ children }) {
         <div className="navbar-tabs" style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
           <Link to={`/${user.role}-dashboard`} className={`nav-link ${location.pathname.includes('dashboard') ? 'active' : ''}`}>Dashboard</Link>
           
-          <Link to="/approvals" className={`nav-link ${location.pathname === '/approvals' ? 'active' : ''}`} style={{ position: 'relative' }}>
-            Pending Approvals
-            {pendingCount > 0 && (
-              <span style={{
-                position: 'absolute', top: '-8px', right: '-12px', background: 'var(--status-danger)', 
-                color: 'white', fontSize: '0.7rem', padding: '0.1rem 0.4rem', borderRadius: 'var(--radius-full)', fontWeight: 'bold'
-              }}>{pendingCount}</span>
-            )}
-          </Link>
+          {showAdminTabs && (
+            <Link to="/approvals" className={`nav-link ${location.pathname === '/approvals' ? 'active' : ''}`} style={{ position: 'relative' }}>
+              Pending Approvals
+              {pendingCount > 0 && (
+                <span style={{
+                  position: 'absolute', top: '-8px', right: '-12px', background: 'var(--status-danger)', 
+                  color: 'white', fontSize: '0.7rem', padding: '0.1rem 0.4rem', borderRadius: 'var(--radius-full)', fontWeight: 'bold'
+                }}>{pendingCount}</span>
+              )}
+            </Link>
+          )}
           
-          <Link to="/audit" className={`nav-link ${location.pathname === '/audit' ? 'active' : ''}`}>Audit Trail</Link>
+          {showAdminTabs && (
+            <Link to="/audit" className={`nav-link ${location.pathname === '/audit' ? 'active' : ''}`}>Audit Trail</Link>
+          )}
           {user.role === 'hod' && (
             <Link to="/simulation" className={`nav-link ${location.pathname === '/simulation' ? 'active' : ''}`}>Simulation Sandbox</Link>
           )}

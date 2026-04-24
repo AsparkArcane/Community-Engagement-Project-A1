@@ -160,3 +160,14 @@ cd H:\Engineering 2024\SY\CEP\client && npm run dev
 ### Manual Checks
 - Billing snapshot frozen correctly (seed a past month, confirm edits don't change historical data)
 - ApplianceLibrary update propagates to all rooms using that appliance
+
+---
+
+## Recent Updates
+
+- Student navbar now hides `Pending Approvals` and `Audit Trail`.
+- Complaint status workflow moved to the **HOD Dashboard** (`Open`, `In Progress`, `Resolved`) with updates persisted via `/api/faults/:id`.
+- HOD now has a **Global Library** modal to view all registered devices with power rating and add new devices.
+- Global Library supports **Edit** and **Delete** actions for devices.
+- In both **Add New Room** and **Manage Room**, device mapping uses a dropdown selection plus `Qty` and `Usage Hours`.
+- `Manage Room` assigned devices area is scrollable while keeping the same block dimensions.

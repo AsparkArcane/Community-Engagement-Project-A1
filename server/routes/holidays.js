@@ -8,6 +8,23 @@ const pdfParse = require('pdf-parse');
 const upload = multer({ storage: multer.memoryStorage() });
 
 // GET /api/holidays
+/**
+ * @swagger
+ * /api/holidays:
+ *   get:
+ *     summary: List holidays
+ *     tags: [Holidays]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: year
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Holiday list
+ */
 router.get('/', protect, async (req, res) => {
   const { year } = req.query;
   const filter = year ? { date: { $gte: new Date(`${year}-01-01`), $lt: new Date(`${Number(year)+1}-01-01`) } } : {};
@@ -16,6 +33,30 @@ router.get('/', protect, async (req, res) => {
 });
 
 // POST /api/holidays/upload-pdf
+/**
+ * @swagger
+ * /api/holidays/upload-pdf:
+ *   post:
+ *     summary: Upload holiday PDF and parse holidays
+ *     tags: [Holidays]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               pdf:
+ *                 type: string
+ *                 format: binary
+ *               year:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: Holidays parsed and saved
+ */
 router.post('/upload-pdf', protect, authorize('admin', 'hod'), upload.single('pdf'), async (req, res) => {
   if (!req.file) return res.status(400).json({ message: 'No PDF uploaded' });
   const data = await pdfParse(req.file.buffer);
@@ -51,18 +92,76 @@ router.post('/upload-pdf', protect, authorize('admin', 'hod'), upload.single('pd
 });
 
 // POST /api/holidays - manual add
+/**
+ * @swagger
+ * /api/holidays:
+ *   post:
+ *     summary: Add holiday manually
+ *     tags: [Holidays]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             additionalProperties: true
+ *     responses:
+ *       201:
+ *         description: Holiday created
+ */
 router.post('/', protect, authorize('admin', 'hod'), async (req, res) => {
   const h = await Holiday.create(req.body);
   res.status(201).json(h);
 });
 
 // DELETE /api/holidays/:id
+/**
+ * @swagger
+ * /api/holidays/{id}:
+ *   delete:
+ *     summary: Delete holiday
+ *     tags: [Holidays]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Holiday deleted
+ */
 router.delete('/:id', protect, authorize('admin'), async (req, res) => {
   await Holiday.findByIdAndDelete(req.params.id);
   res.json({ message: 'Holiday deleted' });
 });
 
 // POST /api/holidays/sync-gcal
+/**
+ * @swagger
+ * /api/holidays/sync-gcal:
+ *   post:
+ *     summary: Sync holidays from Google Calendar URL
+ *     tags: [Holidays]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               calendarUrl:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Holidays synced
+ */
 router.post('/sync-gcal', protect, authorize('admin', 'hod'), async (req, res) => {
   const { calendarUrl } = req.body;
   if (!calendarUrl) return res.status(400).json({ message: 'Missing Google Calendar URL' });

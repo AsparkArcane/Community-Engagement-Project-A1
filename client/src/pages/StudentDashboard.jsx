@@ -65,11 +65,6 @@ export default function StudentDashboard() {
           <p className="text-muted mb-3" style={{ fontSize: '0.875rem' }}>Access full detailed historical consumption data formatted in CSV</p>
           <button className="btn btn-secondary w-full" onClick={downloadReport}>Download CSV</button>
         </div>
-        <div className="card text-center">
-          <h3 className="text-secondary mb-2">Simulation Sandbox</h3>
-          <p className="text-muted mb-3" style={{ fontSize: '0.875rem' }}>Model potential savings if more rooms added solar</p>
-          <button className="btn btn-secondary w-full">Open Sandbox</button>
-        </div>
       </div>
 
       <div className="card mb-4" style={{ maxWidth: '600px', margin: '0 auto' }}>

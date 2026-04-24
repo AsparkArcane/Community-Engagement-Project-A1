@@ -8,6 +8,18 @@ const { protect, authorize } = require('../middleware/auth');
 const { sendEmail } = require('../services/emailService');
 
 // GET /api/proposals
+/**
+ * @swagger
+ * /api/proposals:
+ *   get:
+ *     summary: List proposals
+ *     tags: [Proposals]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Proposals fetched
+ */
 router.get('/', protect, async (req, res) => {
   const filter = {};
   if (req.user.role === 'hod') filter.proposedBy = req.user._id;
@@ -20,6 +32,24 @@ router.get('/', protect, async (req, res) => {
 });
 
 // GET /api/proposals/:id
+/**
+ * @swagger
+ * /api/proposals/{id}:
+ *   get:
+ *     summary: Get proposal by id
+ *     tags: [Proposals]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Proposal details
+ */
 router.get('/:id', protect, async (req, res) => {
   const p = await Proposal.findById(req.params.id)
     .populate('proposedBy', 'name email')
@@ -31,6 +61,25 @@ router.get('/:id', protect, async (req, res) => {
 });
 
 // POST /api/proposals - HOD submits a change
+/**
+ * @swagger
+ * /api/proposals:
+ *   post:
+ *     summary: Submit proposal
+ *     tags: [Proposals]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             additionalProperties: true
+ *     responses:
+ *       201:
+ *         description: Proposal submitted
+ */
 router.post('/', protect, authorize('hod'), async (req, res) => {
   const { roomId, diff, description } = req.body;
   const proposal = await Proposal.create({ roomId, proposedBy: req.user._id, diff, description });
@@ -45,6 +94,24 @@ router.post('/', protect, authorize('hod'), async (req, res) => {
 });
 
 // PUT /api/proposals/:id/review - Admin approves/rejects
+/**
+ * @swagger
+ * /api/proposals/{id}/review:
+ *   put:
+ *     summary: Review proposal (approve/reject)
+ *     tags: [Proposals]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Proposal reviewed
+ */
 router.put('/:id/review', protect, authorize('admin'), async (req, res) => {
   const { status, comment } = req.body;
   if (!['approved', 'rejected'].includes(status)) return res.status(400).json({ message: 'Invalid status' });
@@ -84,6 +151,24 @@ router.put('/:id/review', protect, authorize('admin'), async (req, res) => {
 });
 
 // PUT /api/proposals/:id/resubmit - HOD edits and resubmits rejected proposal
+/**
+ * @swagger
+ * /api/proposals/{id}/resubmit:
+ *   put:
+ *     summary: Resubmit rejected proposal
+ *     tags: [Proposals]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Proposal resubmitted
+ */
 router.put('/:id/resubmit', protect, authorize('hod'), async (req, res) => {
   const { diff, description } = req.body;
   const proposal = await Proposal.findById(req.params.id);
@@ -102,6 +187,33 @@ router.put('/:id/resubmit', protect, authorize('hod'), async (req, res) => {
 });
 
 // POST /api/proposals/:id/comment
+/**
+ * @swagger
+ * /api/proposals/{id}/comment:
+ *   post:
+ *     summary: Add comment to proposal
+ *     tags: [Proposals]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               text:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Comment added
+ */
 router.post('/:id/comment', protect, async (req, res) => {
   const proposal = await Proposal.findById(req.params.id);
   if (!proposal) return res.status(404).json({ message: 'Not found' });

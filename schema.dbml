@@ -1,0 +1,180 @@
+// DBML generated from server/models (Community-Engagement-Project-A1)
+// Docs: https://dbml.dbdiagram.io/docs
+
+Table users {
+  id varchar [primary key, note: 'Mongo ObjectId']
+  name varchar [not null]
+  email varchar [not null, unique]
+  password varchar [not null]
+  role varchar [not null, note: 'admin|hod|student']
+  department_id varchar [note: 'nullable -> departments.id']
+  is_active boolean [default: true]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table departments {
+  id varchar [primary key, note: 'Mongo ObjectId']
+  name varchar [not null, unique]
+  code varchar [not null, unique]
+  hod_id varchar [note: 'nullable -> users.id']
+  tariff_per_unit decimal [default: 7.5]
+  solar_panel_cost_per_kw decimal [default: 50000]
+  fault_penalty decimal [default: 500]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table rooms {
+  id varchar [primary key, note: 'Mongo ObjectId']
+  name varchar [not null]
+  code varchar
+  department_id varchar
+  floor varchar
+  type varchar [note: 'classroom|lab|office|common|other']
+  area_sqm decimal
+  installed_solar_kw decimal [default: 0]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table appliance_library {
+  id varchar [primary key, note: 'Mongo ObjectId']
+  name varchar [not null]
+  power_w decimal [not null]
+  category varchar [default: 'other', note: 'lighting|cooling|computing|av|security|power|networking|other']
+  description text
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table room_appliances {
+  id varchar [primary key, note: 'Mongo ObjectId']
+  room_id varchar [not null]
+  appliance_library_id varchar [not null]
+  quantity integer [not null, default: 1]
+  usage_hours decimal [default: 0, note: 'manual fallback when no timetable']
+  override_power_w decimal
+  is_active boolean [default: true]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table proposals {
+  id varchar [primary key, note: 'Mongo ObjectId']
+  room_id varchar [not null]
+  proposed_by varchar [not null]
+  reviewed_by varchar [note: 'nullable -> users.id']
+  diff_prev json
+  diff_next json
+  description text
+  status varchar [default: 'pending', note: 'pending|approved|rejected|resubmitted|urgent']
+  submitted_at timestamp
+  reviewed_at timestamp
+  escalated_at timestamp
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table proposal_comments {
+  id varchar [primary key, note: 'virtual row id for embedded comments[]']
+  proposal_id varchar [not null]
+  author_id varchar
+  text text
+  created_at timestamp
+}
+
+Table fault_logs {
+  id varchar [primary key, note: 'Mongo ObjectId']
+  room_id varchar [not null]
+  appliance_id varchar [note: 'nullable -> appliance_library.id']
+  reported_by varchar [not null]
+  description text [not null]
+  severity varchar [default: 'medium', note: 'low|medium|high']
+  status varchar [default: 'open', note: 'open|in_progress|resolved']
+  resolved_at timestamp
+  repair_cost decimal [default: 0]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table billing_snapshots {
+  id varchar [primary key, note: 'Mongo ObjectId']
+  room_id varchar [not null]
+  month integer [not null, note: '1-12']
+  year integer [not null]
+  snapshot_data json
+  working_days integer
+  total_kwh decimal
+  total_cost decimal
+  tariff_used decimal
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    (room_id, month, year) [unique]
+  }
+}
+
+Table notifications {
+  id varchar [primary key, note: 'Mongo ObjectId']
+  user_id varchar [not null]
+  message text [not null]
+  type varchar [default: 'info', note: 'info|warning|alert|escalation']
+  related_id varchar [note: 'polymorphic target id']
+  related_model varchar [note: 'polymorphic target model']
+  is_read boolean [default: false]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table audit_logs {
+  id varchar [primary key, note: 'Mongo ObjectId']
+  action varchar [not null]
+  performed_by varchar [not null]
+  target_type varchar [note: 'polymorphic target model']
+  target_id varchar [note: 'polymorphic target id']
+  old_value json
+  new_value json
+  ip_address varchar
+  timestamp timestamp
+}
+
+Table holidays {
+  id varchar [primary key, note: 'Mongo ObjectId']
+  date date [not null, unique]
+  name varchar [not null]
+  type varchar [default: 'institute', note: 'national|state|institute|other']
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table timetable_entries {
+  id varchar [primary key, note: 'Mongo ObjectId']
+  room_id varchar [not null]
+  day_of_week integer [not null, note: '0=Sun..6=Sat']
+  start_time varchar [not null, note: 'HH:mm']
+  end_time varchar [not null, note: 'HH:mm']
+  label varchar [default: 'Lecture']
+  semester_label varchar
+  created_at timestamp
+  updated_at timestamp
+}
+
+Ref: users.department_id > departments.id
+Ref: departments.hod_id > users.id
+Ref: rooms.department_id > departments.id
+Ref: room_appliances.room_id > rooms.id
+Ref: room_appliances.appliance_library_id > appliance_library.id
+Ref: proposals.room_id > rooms.id
+Ref: proposals.proposed_by > users.id
+Ref: proposals.reviewed_by > users.id
+Ref: proposal_comments.proposal_id > proposals.id
+Ref: proposal_comments.author_id > users.id
+Ref: fault_logs.room_id > rooms.id
+Ref: fault_logs.appliance_id > appliance_library.id
+Ref: fault_logs.reported_by > users.id
+Ref: billing_snapshots.room_id > rooms.id
+Ref: notifications.user_id > users.id
+Ref: audit_logs.performed_by > users.id
+Ref: timetable_entries.room_id > rooms.id

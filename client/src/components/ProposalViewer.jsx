@@ -41,6 +41,40 @@ export default function ProposalViewer() {
 
   const user = JSON.parse(localStorage.getItem('vjti_user')) || { role: 'student' };
 
+  const describeConfig = (config, tense = 'current') => {
+    if (!config) return 'No configuration details were provided.';
+    if (typeof config === 'string') return config;
+
+    const details = [];
+
+    if (config.installedSolarKW !== undefined) {
+      details.push(
+        tense === 'current'
+          ? `The room currently has ${config.installedSolarKW} kW of installed solar capacity.`
+          : `The proposal sets installed solar capacity to ${config.installedSolarKW} kW.`
+      );
+    }
+
+    Object.entries(config).forEach(([key, value]) => {
+      if (key === 'installedSolarKW') return;
+      const label = key
+        .replace(/([A-Z])/g, ' $1')
+        .replace(/_/g, ' ')
+        .toLowerCase()
+        .trim();
+
+      details.push(
+        tense === 'current'
+          ? `The current ${label} is ${String(value)}.`
+          : `The proposed ${label} will be ${String(value)}.`
+      );
+    });
+
+    return details.length > 0
+      ? details.join(' ')
+      : 'Configuration details are available, but there is nothing specific to summarize.';
+  };
+
   if (loading) return <div className="text-muted">Loading proposals...</div>;
 
   const pendingProposals = proposals.filter(p => p.status === 'pending' || p.status === 'resubmitted');
@@ -85,17 +119,17 @@ export default function ProposalViewer() {
               {p.diff.prev && (
                 <div style={{ flex: '1 1 200px', border: '1px solid var(--status-danger)', borderRadius: 'var(--radius-md)', padding: '1rem', background: 'rgba(239, 68, 68, 0.05)' }}>
                   <h4 className="text-danger mb-2" style={{ color: 'var(--status-danger)' }}>Old Configuration</h4>
-                  <pre style={{ margin: 0, color: '#ef4444', whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: '12px' }}>
-                    {typeof p.diff.prev === 'string' ? p.diff.prev : JSON.stringify(p.diff.prev, null, 2)}
-                  </pre>
+                  <p style={{ margin: 0, color: '#ef4444', whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: '12px', lineHeight: 1.7 }}>
+                    {describeConfig(p.diff.prev, 'current')}
+                  </p>
                 </div>
               )}
               {p.diff.next && (
                 <div style={{ flex: '1 1 200px', border: '1px solid var(--status-success)', borderRadius: 'var(--radius-md)', padding: '1rem', background: 'rgba(16, 185, 129, 0.05)' }}>
                   <h4 className="text-success mb-2" style={{ color: 'var(--status-success)' }}>New Configuration</h4>
-                  <pre style={{ margin: 0, color: '#10b981', whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: '12px' }}>
-                     {typeof p.diff.next === 'string' ? p.diff.next : JSON.stringify(p.diff.next, null, 2)}
-                  </pre>
+                  <p style={{ margin: 0, color: '#10b981', whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: '12px', lineHeight: 1.7 }}>
+                     {describeConfig(p.diff.next, 'proposed')}
+                  </p>
                 </div>
               )}
             </div>
