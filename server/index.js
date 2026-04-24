@@ -5,7 +5,8 @@ const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
-
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpecs = require('./config/swagger');
 // Middleware
 app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }));
 app.use(express.json());
@@ -26,7 +27,7 @@ app.use('/api/holidays', require('./routes/holidays'));
 app.use('/api/timetable', require('./routes/timetable'));
 app.use('/api/audit', require('./routes/audit'));
 app.use('/api/consumption', require('./routes/consumption'));
-
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 // Global error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);

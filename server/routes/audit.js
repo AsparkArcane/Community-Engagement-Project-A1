@@ -2,6 +2,31 @@ const router = require('express').Router();
 const AuditLog = require('../models/AuditLog');
 const { protect, authorize } = require('../middleware/auth');
 
+/**
+ * @swagger
+ * /api/audit:
+ *   get:
+ *     summary: Get audit logs
+ *     tags: [Audit]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: targetType
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Audit logs fetched
+ */
 router.get('/', protect, authorize('admin', 'hod'), async (req, res) => {
   const { targetType, page = 1, limit = 50 } = req.query;
   const filter = {};
